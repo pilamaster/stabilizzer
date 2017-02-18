@@ -1,32 +1,32 @@
 #include "CurieIMU.h"
 #include "Kalman.h"
 #include <Servo.h>
-
+//raw data from IMU
 int ax, ay, az;
 int gx, gy, gz;
-//
+//angles from accelerometer
 double accXangle;
 double accYangle;
 double accZangle;
-//
+//rate from gyros
 double gyroXrate;
 double gyroYrate;
 double gyroZrate;
-//
+//angles from gyros
 double gyroXangle = 90;
 double gyroYangle = 90;
 double gyroZangle = 90;
-//
+//angles from complementary filter
 double compAngleX = 90;
 double compAngleY = 90;
 double compAngleZ = 90;
-//
+//angles from Kalman filter
 double kalAngleX;
 double kalAngleY;
 double kalAngleZ;
-
+//timer
 uint32_t timer;
-
+//Servo initialisation
 int portServoUp = 3;
 int portServoDown = 4;
 Servo servoUp;
@@ -63,33 +63,35 @@ void setup()
 
 void loop()
 {
+  //reading raw data from IMU
   CurieIMU.readMotionSensor(ax, ay, az, gx, gy, gz);
+  //calculating angles from accelerometer
   accXangle = (atan2(accY,accZ)+PI)*RAD_TO_DEG;
   accYangle = (atan2(accX,accZ)+PI)*RAD_TO_DEG;
   accZangle = (atan2(accY,accX)+PI)*RAD_TO_DEG;
-
+  //rate calculation from gyros
   gyroXrate = (double)gyroX/131.0;
   gyroYrate = -((double)gyroY/131.0);
   gyroZrate = ((double)gyroZ/131.0);
 
-  //
+  //angle calculation from gyros
   gyroXangle += gyroXrate*((double)(micros()-timer)/1000000);
   gyroYangle += gyroYrate*((double)(micros()-timer)/1000000);
   gyroZangle += gyroZrate*((double)(micros()-timer)/1000000);
 
-  //
+  //complementary filter
   compAngleX = (0.93*(compAngleX+(gyroXrate*(double)(micros()-timer)/1000000)))+(0.07*accXangle);
   compAngleY = (0.93*(compAngleY+(gyroYrate*(double)(micros()-timer)/1000000)))+(0.07*accYangle);
   compAngleZ = (0.93*(compAngleZ+(gyroZrate*(double)(micros()-timer)/1000000)))+(0.07*accZangle);
 
-  //
+  //Kalman filter
   kalAngleX = kalmanX.getAngle(accXangle, gyroXrate, (double)(micros()-timer)/1000000);
   kalAngleY = kalmanY.getAngle(accYangle, gyroYrate, (double)(micros()-timer)/1000000);
   kalAngleZ = kalmanZ.getAngle(accZangle, gyroZrate, (double)(micros()-timer)/1000000);
-
+  //writing angles to servos
   servoUp.write(kalAngleX);
   servoDown.write(kalAngleY);
-
+  //time calculation
   timer = micros();
 
 
