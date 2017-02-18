@@ -1,6 +1,10 @@
 #include "CurieIMU.h"
 #include "Kalman.h"
 #include <Servo.h>
+
+Kalman kalmanX;
+Kalman kalmanY;
+Kalman kalmanZ;
 //raw data from IMU
 int ax, ay, az;
 int gx, gy, gz;
@@ -66,13 +70,13 @@ void loop()
   //reading raw data from IMU
   CurieIMU.readMotionSensor(ax, ay, az, gx, gy, gz);
   //calculating angles from accelerometer
-  accXangle = (atan2(accY,accZ)+PI)*RAD_TO_DEG;
-  accYangle = (atan2(accX,accZ)+PI)*RAD_TO_DEG;
-  accZangle = (atan2(accY,accX)+PI)*RAD_TO_DEG;
+  accXangle = (atan2(ay,az)+PI)*RAD_TO_DEG;
+  accYangle = (atan2(ax,az)+PI)*RAD_TO_DEG;
+  accZangle = (atan2(ay,ax)+PI)*RAD_TO_DEG;
   //rate calculation from gyros
-  gyroXrate = (double)gyroX/131.0;
-  gyroYrate = -((double)gyroY/131.0);
-  gyroZrate = ((double)gyroZ/131.0);
+  gyroXrate = (double)gx/131.0;
+  gyroYrate = -((double)gy/131.0);
+  gyroZrate = ((double)gz/131.0);
 
   //angle calculation from gyros
   gyroXangle += gyroXrate*((double)(micros()-timer)/1000000);
